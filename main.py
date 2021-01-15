@@ -1,16 +1,19 @@
 import random
+import sqlite3
 import sys
 
 
 class BankingSystem:
 
-    def __init__(self, account_generator):
+    def __init__(self, account_generator, repository):
         self.accounts = {}
         self.current_account = None  # create a null object
         self.account_generator = account_generator
+        self.repository = repository
 
     def create_account(self):
         acc = self.account_generator.generate_account()
+        acc.save(self.repository)
         self.accounts[acc.card_number] = acc
         acc.print_account_credentials()
         return MainMenu(self)
@@ -124,6 +127,9 @@ class Account:
         print("Your card PIN:")
         print(self.pin)
 
+    def save(self, repository):
+        repository.save_account_data(self.card_number, self.pin, self.balance)
+
 
 class MenuItem:
 
@@ -211,8 +217,35 @@ class AccountMenu(GenericMenu):
         return ExitMenu(self.bs)
 
 
+class MultiPurposeRepository:
+
+    def __init__(self, db_connection):
+        self.connection = db_connection
+
+    def initialize_tables(self):
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS accounts(id INTEGER primary key, number TEXT, pin TEXT, balance INTEGER DEFAULT 0)")
+        self.connection.commit()
+
+    def save_account_data(self, number, pin, balance):
+        cursor = self.connection.cursor()
+        cursor.execute("INSERT INTO accounts(number, pin, balance) values ({0}, {1}, {2})".format(
+            number, pin, balance
+        ))
+        self.connection.commit()
+
+    def find_all_accounts(self):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM accounts")
+        print(cursor.fetchone())
+
+
 def run():
-    banking_system = BankingSystem(AccountGenerator())
+    db_connection = sqlite3.connect("test.s3db")
+    repo = MultiPurposeRepository(db_connection)
+    repo.initialize_tables()
+    banking_system = BankingSystem(AccountGenerator(), repo)
     menu = MainMenu(bs=banking_system)
     while True:
         menu = menu.wait_for_input()
