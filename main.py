@@ -4,12 +4,13 @@ import sys
 
 class BankingSystem:
 
-    def __init__(self):
+    def __init__(self, account_generator):
         self.accounts = {}
         self.current_account = None  # create a null object
+        self.account_generator = account_generator
 
     def create_account(self):
-        acc = AccountGenerator().generate_account()
+        acc = self.account_generator.generate_account()
         self.accounts[acc.card_number] = acc
         acc.print_account_credentials()
         return MainMenu(self)
@@ -40,12 +41,39 @@ class BankingSystem:
         return card_number in self.accounts and self.accounts[card_number].pin == pin
 
 
+class AccountId:
+    MIN_LENGTH = 9
+    MAX_LENGTH = 12
+
+    def __init__(self, number=0, string_value="000000000") -> None:
+        self._current_number = number
+        self.str_value = string_value
+
+    def get_value(self):
+        return self.str_value
+
+    def increment(self):
+        new_number = self._current_number + 1
+        str_value = self._pad_with_zeroes(new_number)
+        return AccountId(new_number, str_value)
+
+    def _pad_with_zeroes(self, new_number):
+        new_number_as_string = str(new_number)
+        length = len(new_number_as_string)
+        if len(str(new_number)) < self.MIN_LENGTH:
+            number_of_zeroes = self.MIN_LENGTH - length
+            new_number_as_string = "{}{}".format("0" * number_of_zeroes, new_number)
+        return new_number_as_string
+
+
 class AccountGenerator:
-    last_account_id = 0
+
+    def __init__(self):
+        self.last_account_id = AccountId()
 
     def generate_account(self):
-        account_id = self._generate_unique_account_id()
-        card_number = self._generate_card_number(account_id)
+        account_id = self.last_account_id.increment()
+        card_number = self._generate_card_number(account_id.str_value)
         pin_number = self._generate_pin()
         new_account = Account(card_number, pin_number)
         self._update_last_unique_id(account_id)  # update unique id only when account created successfully
@@ -61,18 +89,14 @@ class AccountGenerator:
         checksum = self.generate_checksum()
         return "400000{}{}".format(unique_account_id, checksum)
 
-    def _generate_unique_account_id(self):
-        return Account.last_account_id + 1
-
     def _update_last_unique_id(self, account_id):
-        Account.last_account_id = account_id
+        self.last_account_id = account_id
 
     def generate_checksum(self):
         return 0
 
 
 class Account:
-    last_account_id = 0
 
     def __init__(self, card_number, pin):
         self.card_number = card_number
@@ -174,7 +198,7 @@ class AccountMenu(GenericMenu):
 
 
 def run():
-    banking_system = BankingSystem()
+    banking_system = BankingSystem(AccountGenerator())
     menu = MainMenu(bs=banking_system)
     while True:
         menu = menu.wait_for_input()
