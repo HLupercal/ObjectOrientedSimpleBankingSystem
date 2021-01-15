@@ -43,7 +43,7 @@ class BankingSystem:
 
 class AccountId:
     MIN_LENGTH = 9
-    MAX_LENGTH = 12
+    MAX_LENGTH = 12  # not used yet
 
     def __init__(self, number=0, string_value="000000000") -> None:
         self._current_number = number
