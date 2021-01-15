@@ -86,8 +86,8 @@ class AccountGenerator:
         return pin
 
     def _generate_card_number(self, unique_account_id):
-        checksum = self.generate_checksum("400000844943340")
-        # checksum = self.generate_checksum("400000" + unique_account_id)
+        # checksum = self.generate_checksum("400000844943340")
+        checksum = self.generate_checksum("400000" + unique_account_id)
         return "400000{}{}".format(unique_account_id, checksum)
 
     def _update_last_unique_id(self, account_id):
@@ -95,24 +95,18 @@ class AccountGenerator:
 
     def generate_checksum(self, unique_account_id):
         number_array = []
-        for idx, letter in unique_account_id:
-            number = int(letter)
-            if idx % 2 != 0:
+        for idx, number in enumerate(unique_account_id):
+            number = int(number)
+            if (idx + 1) % 2 != 0:
                 number *= 2
             number_array.append(number)
 
-        for idx, element in number_array:
+        for idx, element in enumerate(number_array):
             if element > 9:
                 element -= 9
             number_array[idx] = element
 
-        for idx, element in number_array:
-            if element > 9:
-                element -= 9
-            number_array[idx] = element
-
-        checksum = 10 - (sum(number_array) % 10)
-        print(checksum)
+        checksum = (10 - (sum(number_array) % 10)) % 10
         return checksum
 
 
