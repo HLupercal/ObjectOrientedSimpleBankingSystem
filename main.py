@@ -9,24 +9,25 @@ class BankingSystem:
 
     def create_account(self):
         acc = Account()
-        self.accounts += {acc.card_number, acc}
+        self.accounts[acc.card_number] = acc
+        print("Your card has been created")
+        print("Your card number:")
+        print(acc.card_number)
+        print("Your card PIN:")
+        print(acc.pin)
         return MainMenu(self)
 
     def handle_login(self):
         card_number = input("Enter your card number:")
         card_pin = input("Enter your PIN:")
-        self._try_login(card_number, card_pin)
+        return self._try_login(card_number, card_pin)
 
     def check_current_account_balance(self):
         print(self.current_account.balance)
         return AccountMenu(self)
 
     def _try_login(self, card_number, pin):
-        if self.accounts[card_number]:
-            self._login(card_number, pin)
-
-    def _login(self, card_number, pin):
-        if self.accounts[card_number].pin == pin:
+        if self.accounts[card_number] and self.accounts[card_number].pin == pin:
             print("You have successfully logged in!")
             self.current_account = self.accounts[card_number]
             return AccountMenu(self)
