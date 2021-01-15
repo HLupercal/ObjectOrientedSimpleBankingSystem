@@ -1,3 +1,4 @@
+import random
 import sys
 
 
@@ -8,7 +9,7 @@ class BankingSystem:
         self.current_account = None  # create a null object
 
     def create_account(self):
-        acc = Account()
+        acc = AccountGenerator().generate_account()
         self.accounts[acc.card_number] = acc
         acc.print_account_credentials()
         return MainMenu(self)
@@ -39,13 +40,43 @@ class BankingSystem:
         return card_number in self.accounts and self.accounts[card_number].pin == pin
 
 
+class AccountGenerator:
+    last_account_id = 0
+
+    def generate_account(self):
+        account_id = self._generate_unique_account_id()
+        card_number = self._generate_card_number(account_id)
+        pin_number = self._generate_pin()
+        new_account = Account(card_number, pin_number)
+        self._update_last_unique_id(account_id)  # update unique id only when account created successfully
+        return new_account
+
+    def _generate_pin(self):
+        pin = ""
+        for i in range(4):
+            pin += str(random.randint(0, 9))
+        return pin
+
+    def _generate_card_number(self, unique_account_id):
+        checksum = self.generate_checksum()
+        return "400000{}{}".format(unique_account_id, checksum)
+
+    def _generate_unique_account_id(self):
+        return Account.last_account_id + 1
+
+    def _update_last_unique_id(self, account_id):
+        Account.last_account_id = account_id
+
+    def generate_checksum(self):
+        return 0
 
 
 class Account:
+    last_account_id = 0
 
-    def __init__(self):
-        self.card_number = "123"
-        self.pin = "1111"
+    def __init__(self, card_number, pin):
+        self.card_number = card_number
+        self.pin = pin
         self.balance = 0
 
     def print_account_credentials(self):
