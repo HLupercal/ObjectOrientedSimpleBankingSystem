@@ -58,7 +58,7 @@ class MenuItem:
         return self.handler_function()
 
 
-class GenericMenu():
+class GenericMenu:
     def __init__(self, bs: BankingSystem):
         self.bs = bs
 
@@ -89,9 +89,9 @@ class MainMenu(GenericMenu):
         return self.options_dict[selected_option].invoke()
 
     def print_menu(self):
-        print(self.option1)
-        print(self.option2)
-        print(self.option0)
+        print("1. {}".format(self.options_dict[1].message))
+        print("2. {}".format(self.options_dict[2].message))
+        print("0. {}".format(self.options_dict[0].message))
 
     def _handle_account_creation(self):
         return self.bs.create_account()
@@ -105,36 +105,31 @@ class MainMenu(GenericMenu):
 
 
 class AccountMenu(GenericMenu):
-    option1 = "1. Balance"
-    option2 = "2. Log out"
-    option0 = "0. Exit"
 
     def __init__(self, bs: BankingSystem):
         super().__init__(bs)
+        self.options_dict = {1: MenuItem("Balance", self._handle_balance_check),
+                             2: MenuItem("Log out", self._handle_logout),
+                             0: MenuItem("Exit", self._handle_exit)}
 
     def print_menu(self):
-        print(self.option1)
-        print(self.option2)
-        print(self.option0)
+        print("1. {}".format(self.options_dict[1].message))
+        print("2. {}".format(self.options_dict[2].message))
+        print("0. {}".format(self.options_dict[0].message))
 
     def wait_for_input(self):
         self.print_menu()
         selected_option = int(input())
-        if selected_option == 1:
-            return self.handle1()
-        elif selected_option == 2:
-            return self.handle2()
-        elif selected_option == 0:
-            return self.handle0()
+        return self.options_dict[selected_option].invoke()
 
-    def handle1(self):
+    def _handle_balance_check(self):
         return self.bs.check_current_account_balance()
 
-    def handle2(self):
+    def _handle_logout(self):
         return self.bs.handle_logout()
 
-    def handle0(self):
-        return self.bs.handle_login()
+    def _handle_exit(self):
+        return ExitMenu(self.bs)
 
 
 def run():
