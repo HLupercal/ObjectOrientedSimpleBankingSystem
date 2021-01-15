@@ -36,7 +36,7 @@ class BankingSystem:
             return MainMenu(self)
 
     def handle_logout(self):
-        self.current_account = None # create null object
+        self.current_account = None  # create null object
         return MainMenu(self)
 
 
@@ -48,56 +48,69 @@ class Account:
         self.balance = 0
 
 
-class ExitMenu:
+class MenuItem:
+
+    def __init__(self, message, handler_function):
+        self.message = message
+        self.handler_function = handler_function
+
+    def invoke(self):
+        return self.handler_function()
+
+
+class GenericMenu():
     def __init__(self, bs: BankingSystem):
         self.bs = bs
+
+    def wait_for_input(self):
+        pass
+
+
+class ExitMenu(GenericMenu):
+    def __init__(self, bs: BankingSystem):
+        super().__init__(bs)
 
     def wait_for_input(self):
         print("Bye!")
         sys.exit()
 
 
-class MainMenu:
-    option1 = "1. Create an account"
-    option2 = "2. Log into account"
-    option0 = "0. Exit"
+class MainMenu(GenericMenu):
 
     def __init__(self, bs: BankingSystem):
-        self.bs = bs
+        super().__init__(bs)
+        self.options_dict = {1: MenuItem("Create an account", self._handle_account_creation),
+                             2: MenuItem("Log into account", self._handle_login),
+                             0: MenuItem("Exit", self._handle_exit)}
 
     def wait_for_input(self):
         self.print_menu()
         selected_option = int(input())
-        if selected_option == 1:
-            return self.handle1()
-        elif selected_option == 2:
-            return self.handle2()
-        elif selected_option == 0:
-            return self.handle0()
+        return self.options_dict[selected_option].invoke()
 
     def print_menu(self):
         print(self.option1)
         print(self.option2)
         print(self.option0)
 
-    def handle1(self):
+    def _handle_account_creation(self):
         return self.bs.create_account()
 
-    def handle2(self):
+    def _handle_login(self):
         return self.bs.handle_login()
 
-    def handle0(self):
+    def _handle_exit(self):
         val = ExitMenu(self.bs)
         return val
 
 
-class AccountMenu:
+class AccountMenu(GenericMenu):
     option1 = "1. Balance"
     option2 = "2. Log out"
     option0 = "0. Exit"
 
     def __init__(self, bs: BankingSystem):
-        self.bs = bs
+        super().__init__(bs)
 
     def print_menu(self):
         print(self.option1)
