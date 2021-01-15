@@ -68,11 +68,11 @@ class MainMenu:
         self.print_menu()
         selected_option = int(input())
         if selected_option == 1:
-            self.handle1()
+            return self.handle1()
         elif selected_option == 2:
-            self.handle2()
+            return self.handle2()
         elif selected_option == 0:
-            self.handle0()
+            return self.handle0()
 
     def print_menu(self):
         print(self.option1)
@@ -86,7 +86,8 @@ class MainMenu:
         return self.bs.handle_login()
 
     def handle0(self):
-        return ExitMenu(self.bs)
+        val = ExitMenu(self.bs)
+        return val
 
 
 class AccountMenu:
@@ -106,11 +107,11 @@ class AccountMenu:
         self.print_menu()
         selected_option = int(input())
         if selected_option == 1:
-            self.handle1()
+            return self.handle1()
         elif selected_option == 2:
-            self.handle2()
+            return self.handle2()
         elif selected_option == 0:
-            self.handle0()
+            return self.handle0()
 
     def handle1(self):
         return self.bs.check_current_account_balance()
