@@ -34,9 +34,7 @@ class BankingSystem:
     # TODO: extract and simplify
     def _try_login(self, card_number, pin):
         account = self.repository.find_account_by_card_number(card_number)
-        # if not account:  # this is dumb, but alas - requirements
-        #     print("Such a card does not exist.")
-        #     return MainMenu(self)
+        # TODO: there's a bug here - sometimes the pin validation fails
         if account and account.card_number == card_number and account.pin == pin:
             print("You have successfully logged in!")
             self.current_account = account
