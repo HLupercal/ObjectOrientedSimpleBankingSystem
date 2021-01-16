@@ -74,15 +74,14 @@ class BankingSystem:
         print("Success!")
         return AccountMenu(self)
 
-
     def _is_entered_card_number_valid(self, card_number):
         generated_checksum = self.account_generator.generate_checksum(card_number[:-1])
         stored_checksum = int(card_number[-1])
         return generated_checksum == stored_checksum
 
+
 class AccountId:
     MIN_LENGTH = 9
-    MAX_LENGTH = 12  # not used yet
 
     def __init__(self, number=0, string_value="000000000") -> None:
         self._current_number = number
@@ -150,7 +149,7 @@ class AccountGenerator:
 
 class Account:
 
-    def __init__(self, card_number, pin, balance = 0):
+    def __init__(self, card_number, pin, balance=0):
         self.card_number = card_number
         self.pin = pin
         self.balance = balance
@@ -299,7 +298,6 @@ class MultiPurposeRepository:
         ))
         entry = cursor.fetchone()
         if entry:
-            # return AccountId.from_card_number(entry[0])
             return Account(entry[0], entry[1], entry[2])
         else:
             None
