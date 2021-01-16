@@ -12,7 +12,8 @@ class BankingSystem:
         self.repository = repository
 
     def create_account(self):
-        acc = self.account_generator.generate_account()
+        last_account_id = self._get_last_account_id()
+        acc = self.account_generator.generate_account(last_account_id)
         acc.save(self.repository)
         self.accounts[acc.card_number] = acc
         acc.print_account_credentials()
@@ -44,6 +45,9 @@ class BankingSystem:
     def _are_credentials_valid(self, card_number, pin):
         return card_number in self.accounts and self.accounts[card_number].pin == pin
 
+    def _get_last_account_id(self):
+        return self.repository.find_last_added_card_number()
+
 
 class AccountId:
     MIN_LENGTH = 9
@@ -72,11 +76,8 @@ class AccountId:
 
 class AccountGenerator:
 
-    def __init__(self):
-        self.last_account_id = AccountId()
-
-    def generate_account(self):
-        account_id = self.last_account_id.increment()
+    def generate_account(self, last_account_id):
+        account_id = last_account_id.increment()
         card_number = self._generate_card_number(account_id.str_value)
         pin_number = self._generate_pin()
         new_account = Account(card_number, pin_number)
@@ -90,7 +91,6 @@ class AccountGenerator:
         return pin
 
     def _generate_card_number(self, unique_account_id):
-        # checksum = self.generate_checksum("400000844943340")
         checksum = self.generate_checksum("400000" + unique_account_id)
         return "400000{}{}".format(unique_account_id, checksum)
 
@@ -195,12 +195,18 @@ class AccountMenu(GenericMenu):
     def __init__(self, bs: BankingSystem):
         super().__init__(bs)
         self.options_dict = {1: MenuItem("Balance", self._handle_balance_check),
-                             2: MenuItem("Log out", self._handle_logout),
+                             2: MenuItem("Add Income", self._handle_add_income),
+                             3: MenuItem("Do Transfer", self._handle_transfer),
+                             4: MenuItem("Close Account", self._handle_close_account),
+                             5: MenuItem("Log out", self._handle_logout),
                              0: MenuItem("Exit", self._handle_exit)}
 
     def print_menu(self):
         print("1. {}".format(self.options_dict[1].message))
         print("2. {}".format(self.options_dict[2].message))
+        print("3. {}".format(self.options_dict[3].message))
+        print("4. {}".format(self.options_dict[4].message))
+        print("5. {}".format(self.options_dict[5].message))
         print("0. {}".format(self.options_dict[0].message))
 
     def wait_for_input(self):
@@ -223,6 +229,9 @@ class MultiPurposeRepository:
     def __init__(self, db_connection):
         self.connection = db_connection
 
+    def get_last_account(self):
+        pass  # implement
+
     def initialize_tables(self):
         cursor = self.connection.cursor()
         cursor.execute(
@@ -240,6 +249,16 @@ class MultiPurposeRepository:
         cursor = self.connection.cursor()
         cursor.execute("SELECT balance FROM card WHERE number = '{0}'".format(number))
         return cursor.fetchone()[0]
+
+    def find_last_added_card_number(self):
+        cursor = self.connection.cursor()
+        # cursor.execute("SELECT Top 1 number FROM card")
+        cursor.execute("SELECT number from card ORDER BY id DESC LIMIT 1")
+        entry = cursor.fetchone()
+        if entry:
+            return AccountId(int(entry[0]), str(entry[0]))  # TODO: add constructor from_card_number
+        else:
+            return AccountId()
 
     def find_all_accounts(self):
         cursor = self.connection.cursor()
