@@ -6,7 +6,6 @@ import sys
 class BankingSystem:
 
     def __init__(self, account_generator, repository):
-        # these 2 should be redundant - leftovers from first implementation
         self.current_account = None  # create a null object
 
         self.account_generator = account_generator
@@ -35,7 +34,7 @@ class BankingSystem:
     # TODO: extract and simplify
     def _try_login(self, card_number, pin):
         account = self.repository.find_account_by_card_number(card_number)
-        if not account: # this is dumb, but alas - requirements
+        if not account:  # this is dumb, but alas - requirements
             print("Such a card does not exist.")
             return MainMenu(self)
         if account.card_number == card_number and account.pin == pin:
@@ -60,6 +59,9 @@ class BankingSystem:
     def transfer_money(self):
         print("Enter card number:")
         card_number = input()
+        if card_number == self.current_account.card_number:
+            print("You can't transfer money to the same account!")
+            return AccountMenu(self)
         if not self._is_entered_card_number_valid(card_number):
             print("Probably you made a mistake in the card number. Please try again!")
             return AccountMenu(self)
