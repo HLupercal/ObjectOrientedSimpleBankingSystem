@@ -225,12 +225,12 @@ class MultiPurposeRepository:
     def initialize_tables(self):
         cursor = self.connection.cursor()
         cursor.execute(
-            "CREATE TABLE IF NOT EXISTS accounts(id INTEGER primary key, number TEXT, pin TEXT, balance INTEGER DEFAULT 0)")
+            "CREATE TABLE IF NOT EXISTS card(id INTEGER primary key, number TEXT, pin TEXT, balance INTEGER DEFAULT 0)")
         self.connection.commit()
 
     def save_account_data(self, number, pin, balance):
         cursor = self.connection.cursor()
-        cursor.execute("INSERT INTO accounts(number, pin, balance) values ({0}, {1}, {2})".format(
+        cursor.execute("INSERT INTO card(number, pin, balance) values ({0}, {1}, {2})".format(
             number, pin, balance
         ))
         self.connection.commit()
@@ -242,7 +242,7 @@ class MultiPurposeRepository:
 
 
 def run():
-    db_connection = sqlite3.connect("test.s3db")
+    db_connection = sqlite3.connect("card.s3db")
     repo = MultiPurposeRepository(db_connection)
     repo.initialize_tables()
     banking_system = BankingSystem(AccountGenerator(), repo)
