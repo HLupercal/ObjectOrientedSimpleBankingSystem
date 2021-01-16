@@ -6,8 +6,9 @@ import sys
 class BankingSystem:
 
     def __init__(self, account_generator, repository):
-        self.accounts = {}
+        # these 2 should be redundant - leftovers from first implementation
         self.current_account = None  # create a null object
+
         self.account_generator = account_generator
         self.repository = repository
 
@@ -15,7 +16,6 @@ class BankingSystem:
         last_account_id = self._get_last_account_id()
         acc = self.account_generator.generate_account(last_account_id)
         acc.save(self.repository)
-        self.accounts[acc.card_number] = acc
         acc.print_account_credentials()
         return MainMenu(self)
 
@@ -42,9 +42,6 @@ class BankingSystem:
         else:
             print("Wrong card number or PIN!")
             return MainMenu(self)
-
-    def _are_credentials_valid(self, card_number, pin):
-        return card_number in self.accounts and self.accounts[card_number].pin == pin
 
     def _get_last_account_id(self):
         return self.repository.find_last_added_card_number()
