@@ -32,9 +32,12 @@ class BankingSystem:
         self.current_account = None  # create null object
         return MainMenu(self)
 
+    # TODO: extract and simplify
     def _try_login(self, card_number, pin):
-        # get account from DB instead of in memory
         account = self.repository.find_account_by_card_number(card_number)
+        if not account: # this is dumb, but alas - requirements
+            print("Such a card does not exist.")
+            return MainMenu(self)
         if account.card_number == card_number and account.pin == pin:
             print("You have successfully logged in!")
             self.current_account = account
@@ -75,6 +78,10 @@ class BankingSystem:
         generated_checksum = self.account_generator.generate_checksum(card_number[:-1])
         stored_checksum = int(card_number[-1])
         return generated_checksum == stored_checksum
+
+    def close_account(self):
+        self.repository.delete_card_by_card_number(self.current_account.card_number)
+        return MainMenu(self)
 
 
 class AccountId:
@@ -263,7 +270,7 @@ class AccountMenu(GenericMenu):
         return self.bs.transfer_money()
 
     def _handle_close_account(self):
-        pass
+        return self.bs.close_account()
 
     def _handle_logout(self):
         return self.bs.handle_logout()
@@ -331,6 +338,11 @@ class MultiPurposeRepository:
         cursor = self.connection.cursor()
         cursor.execute("SELECT * FROM accounts")
         print(cursor.fetchone())
+
+    def delete_card_by_card_number(self, card_number):
+        cursor = self.connection.cursor()
+        cursor.execute("DELETE from card WHERE number='{0}'".format(card_number))
+        self.connection.commit()
 
 
 def run():
