@@ -25,7 +25,6 @@ class BankingSystem:
         return self._try_login(card_number, card_pin)
 
     def check_current_account_balance(self):
-        # print(self.current_account.balance)
         print(self.repository.get_account_balance(self.current_account.card_number))
         return AccountMenu(self)
 
@@ -57,6 +56,13 @@ class AccountId:
         self._current_number = number
         self.str_value = string_value
 
+    @staticmethod
+    def from_card_number(card_number):
+        account_id_with_checksum = card_number[len("400000"):]
+        bare_account_id = account_id_with_checksum[:-1]
+        account_number = int(bare_account_id)
+        return AccountId(account_number, bare_account_id)
+
     def get_value(self):
         return self.str_value
 
@@ -81,7 +87,6 @@ class AccountGenerator:
         card_number = self._generate_card_number(account_id.str_value)
         pin_number = self._generate_pin()
         new_account = Account(card_number, pin_number)
-        self._update_last_unique_id(account_id)  # update unique id only when account created successfully
         return new_account
 
     def _generate_pin(self):
@@ -93,9 +98,6 @@ class AccountGenerator:
     def _generate_card_number(self, unique_account_id):
         checksum = self.generate_checksum("400000" + unique_account_id)
         return "400000{}{}".format(unique_account_id, checksum)
-
-    def _update_last_unique_id(self, account_id):
-        self.last_account_id = account_id
 
     def generate_checksum(self, unique_account_id):
         number_array = []
@@ -252,11 +254,10 @@ class MultiPurposeRepository:
 
     def find_last_added_card_number(self):
         cursor = self.connection.cursor()
-        # cursor.execute("SELECT Top 1 number FROM card")
         cursor.execute("SELECT number from card ORDER BY id DESC LIMIT 1")
         entry = cursor.fetchone()
         if entry:
-            return AccountId(int(entry[0]), str(entry[0]))  # TODO: add constructor from_card_number
+            return AccountId.from_card_number(entry[0])
         else:
             return AccountId()
 
