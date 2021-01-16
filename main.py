@@ -24,7 +24,8 @@ class BankingSystem:
         return self._try_login(card_number, card_pin)
 
     def check_current_account_balance(self):
-        print(self.current_account.balance)
+        # print(self.current_account.balance)
+        print(self.repository.get_account_balance(self.current_account.card_number))
         return AccountMenu(self)
 
     def handle_logout(self):
@@ -234,6 +235,11 @@ class MultiPurposeRepository:
             number, pin, balance
         ))
         self.connection.commit()
+
+    def get_account_balance(self, number):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT balance FROM card WHERE number = '{0}'".format(number))
+        return cursor.fetchone()[0]
 
     def find_all_accounts(self):
         cursor = self.connection.cursor()
