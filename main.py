@@ -34,10 +34,10 @@ class BankingSystem:
     # TODO: extract and simplify
     def _try_login(self, card_number, pin):
         account = self.repository.find_account_by_card_number(card_number)
-        if not account:  # this is dumb, but alas - requirements
-            print("Such a card does not exist.")
-            return MainMenu(self)
-        if account.card_number == card_number and account.pin == pin:
+        # if not account:  # this is dumb, but alas - requirements
+        #     print("Such a card does not exist.")
+        #     return MainMenu(self)
+        if account and account.card_number == card_number and account.pin == pin:
             print("You have successfully logged in!")
             self.current_account = account
             return AccountMenu(self)
@@ -65,14 +65,17 @@ class BankingSystem:
         if not self._is_entered_card_number_valid(card_number):
             print("Probably you made a mistake in the card number. Please try again!")
             return AccountMenu(self)
-        account = self.repository.find_account_by_card_number(card_number)
-        if not account:
+        target_account = self.repository.find_account_by_card_number(card_number)
+        if not target_account:
             print("Such a card does not exist.")
             return AccountMenu(self)
         print("Enter how much money you want to transfer:")
         money_to_transfer = int(input())
+        if self.current_account.balance < money_to_transfer:
+            print("Not enough money!")
+            return AccountMenu(self)
         self.current_account.add_income(money_to_transfer * -1, self.repository)
-        account.add_income(money_to_transfer, self.repository)
+        target_account.add_income(money_to_transfer, self.repository)
         print("Success!")
         return AccountMenu(self)
 
