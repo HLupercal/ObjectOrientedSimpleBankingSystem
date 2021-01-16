@@ -33,6 +33,8 @@ class BankingSystem:
         return MainMenu(self)
 
     def _try_login(self, card_number, pin):
+        # get account from DB instead of in memory
+        # self.repository.find_account_by_card_number(card_number)
         if self._are_credentials_valid(card_number, pin):
             print("You have successfully logged in!")
             self.current_account = self.accounts[card_number]
@@ -47,6 +49,34 @@ class BankingSystem:
     def _get_last_account_id(self):
         return self.repository.find_last_added_card_number()
 
+    def add_income(self):
+        print("Enter income:")
+        income = int(input())
+        self.current_account = self.current_account.add_income(income, self.repository)
+        print("Income was added!")
+        return AccountMenu(self)
+
+    def transfer_money(self):
+        print("Enter card number:")
+        card_number = input()
+        if not self._is_entered_card_number_valid(card_number):
+            print("Probably you made a mistake in the card number. Please try again!")
+            return AccountMenu(self)
+        account = self.repository.find_account_by_card_number(card_number)
+        if not account:
+            print("Such a card does not exist.")
+            return AccountMenu(self)
+        print("Enter how much money you want to transfer:")
+        money_to_transfer = int(input())
+        self.current_account.add_income(money_to_transfer * -1, self.repository)
+        account.add_income(money_to_transfer, self.repository)
+        print("Success!")
+
+
+    def _is_entered_card_number_valid(self, card_number):
+        generated_checksum = self.account_generator.generate_checksum(card_number[:-1])
+        stored_checksum = int(card_number[-1])
+        return generated_checksum == stored_checksum
 
 class AccountId:
     MIN_LENGTH = 9
@@ -130,6 +160,11 @@ class Account:
         print("Your card PIN:")
         print(self.pin)
 
+    def add_income(self, income, repository):
+        self.balance += income
+        repository.update_account_balance(self.card_number, self.balance)
+        return self
+
     def save(self, repository):
         repository.save_account_data(self.card_number, self.pin, self.balance)
 
@@ -192,6 +227,10 @@ class MainMenu(GenericMenu):
         return ExitMenu(self.bs)
 
 
+class AddIncomeMenu(GenericMenu):
+    pass
+
+
 class AccountMenu(GenericMenu):
 
     def __init__(self, bs: BankingSystem):
@@ -219,6 +258,15 @@ class AccountMenu(GenericMenu):
     def _handle_balance_check(self):
         return self.bs.check_current_account_balance()
 
+    def _handle_add_income(self):
+        return self.bs.add_income()
+
+    def _handle_transfer(self):
+        return self.bs.transfer_money()
+
+    def _handle_close_account(self):
+        pass
+
     def _handle_logout(self):
         return self.bs.handle_logout()
 
@@ -231,19 +279,38 @@ class MultiPurposeRepository:
     def __init__(self, db_connection):
         self.connection = db_connection
 
-    def get_last_account(self):
-        pass  # implement
-
     def initialize_tables(self):
         cursor = self.connection.cursor()
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS card(id INTEGER primary key, number TEXT, pin TEXT, balance INTEGER DEFAULT 0)")
         self.connection.commit()
 
-    def save_account_data(self, number, pin, balance):
+    def find_account_by_card_number(self, card_number):
+        """
+
+        :param card_number: string
+        :return: Either AccountId object or None
+        """
+        cursor = self.connection.cursor()
+        entry = cursor.execute("SELECT number, pin, balance FROM card WHERE number={0}".format(
+            card_number
+        ))
+        if entry:
+            return AccountId.from_card_number(entry[0])
+        else:
+            None
+
+    def save_account_data(self, number, pin, balance):  # change arg to account
         cursor = self.connection.cursor()
         cursor.execute("INSERT INTO card(number, pin, balance) values ({0}, {1}, {2})".format(
             number, pin, balance
+        ))
+        self.connection.commit()
+
+    def update_account_balance(self, card_number, balance):  # change arg to account
+        cursor = self.connection.cursor()
+        cursor.execute("UPDATE card SET balance = {0} WHERE number = {1}".format(
+            balance, card_number
         ))
         self.connection.commit()
 
