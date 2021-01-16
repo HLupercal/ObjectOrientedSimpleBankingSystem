@@ -34,10 +34,10 @@ class BankingSystem:
 
     def _try_login(self, card_number, pin):
         # get account from DB instead of in memory
-        # self.repository.find_account_by_card_number(card_number)
-        if self._are_credentials_valid(card_number, pin):
+        account = self.repository.find_account_by_card_number(card_number)
+        if account.card_number == card_number and account.pin == pin:
             print("You have successfully logged in!")
-            self.current_account = self.accounts[card_number]
+            self.current_account = account
             return AccountMenu(self)
         else:
             print("Wrong card number or PIN!")
@@ -56,6 +56,7 @@ class BankingSystem:
         print("Income was added!")
         return AccountMenu(self)
 
+    # TODO: extract and simplify
     def transfer_money(self):
         print("Enter card number:")
         card_number = input()
@@ -71,6 +72,7 @@ class BankingSystem:
         self.current_account.add_income(money_to_transfer * -1, self.repository)
         account.add_income(money_to_transfer, self.repository)
         print("Success!")
+        return AccountMenu(self)
 
 
     def _is_entered_card_number_valid(self, card_number):
@@ -148,10 +150,10 @@ class AccountGenerator:
 
 class Account:
 
-    def __init__(self, card_number, pin):
+    def __init__(self, card_number, pin, balance = 0):
         self.card_number = card_number
         self.pin = pin
-        self.balance = 0
+        self.balance = balance
 
     def print_account_credentials(self):
         print("Your card has been created")
@@ -292,11 +294,13 @@ class MultiPurposeRepository:
         :return: Either AccountId object or None
         """
         cursor = self.connection.cursor()
-        entry = cursor.execute("SELECT number, pin, balance FROM card WHERE number={0}".format(
+        cursor.execute("SELECT number, pin, balance FROM card WHERE number={0}".format(
             card_number
         ))
+        entry = cursor.fetchone()
         if entry:
-            return AccountId.from_card_number(entry[0])
+            # return AccountId.from_card_number(entry[0])
+            return Account(entry[0], entry[1], entry[2])
         else:
             None
 
