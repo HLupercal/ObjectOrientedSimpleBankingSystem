@@ -1,6 +1,7 @@
 import random
 import sqlite3
 import sys
+from abc import abstractmethod, ABC
 
 
 class BankingSystem:
@@ -187,15 +188,13 @@ class MenuItem:
         return self.handler_function()
 
 
-class GenericMenu:
+class GenericMenu(ABC):
     def __init__(self, bs: BankingSystem):
         self.bs = bs
 
+    @abstractmethod
     def wait_for_input(self):
-        """
-        empty interface
-        """
-        pass
+        ...
 
 
 class ExitMenu(GenericMenu):
